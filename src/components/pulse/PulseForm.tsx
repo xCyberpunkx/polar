@@ -4,21 +4,15 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, Button, SliderInput } from '@/components/ui'
 
-const WORDS = ['calm', 'anxious', 'energized', 'tired', 'hopeful', 'overwhelmed', 'neutral', 'happy', 'sad', 'restless', 'focused', 'foggy', 'irritable', 'content', 'numb']
+const WORDS = ['calm', 'anxious', 'energized', 'tired', 'hopeful', 'overwhelmed', 'neutral', 'happy', 'sad', 'restless', 'focused', 'foggy', 'irritable', 'content', 'numb', 'wired', 'empty', 'motivated']
 
 export function PulseForm() {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [reflection, setReflection] = useState('')
-
   const [form, setForm] = useState({
-    mood: 5,
-    energy: 5,
-    sleep: 7,
-    medsTaken: null as boolean | null,
-    word: '',
-    note: '',
+    mood: 5, energy: 5, sleep: 7, medsTaken: null as boolean | null, word: '', note: '',
   })
 
   const totalSteps = 4
@@ -26,7 +20,6 @@ export function PulseForm() {
   async function handleSubmit() {
     if (form.medsTaken === null || !form.word) return
     setLoading(true)
-
     try {
       const res = await fetch('/api/checkins', {
         method: 'POST',
@@ -36,7 +29,7 @@ export function PulseForm() {
       const data = await res.json()
       if (data.aiReflection) {
         setReflection(data.aiReflection)
-        setStep(5) // reflection step
+        setStep(5)
       } else {
         router.push('/')
         router.refresh()
@@ -46,80 +39,55 @@ export function PulseForm() {
     }
   }
 
+  const progress = Math.min(100, ((step - 1) / totalSteps) * 100)
+
   return (
-    <Card>
-      {/* Progress bar */}
-      <div style={{ marginBottom: '28px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-3)' }}>
-            {step <= totalSteps ? `Step ${step} of ${totalSteps}` : 'Complete'}
-          </span>
-          <span style={{ fontSize: '12px', color: 'var(--text-3)' }}>
-            {step <= totalSteps ? `${Math.round((step / totalSteps) * 100)}%` : '100%'}
-          </span>
-        </div>
-        <div style={{ height: '3px', background: 'var(--border-2)', borderRadius: '2px' }}>
-          <div
-            style={{
-              height: '100%',
-              width: `${Math.min(100, (step / totalSteps) * 100)}%`,
-              background: 'var(--accent)',
-              borderRadius: '2px',
-              transition: 'width 0.3s ease',
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Step 1: Mood & Energy */}
-      {step === 1 && (
-        <div>
-          <h2 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '6px' }}>How are you feeling?</h2>
-          <p style={{ fontSize: '13px', color: 'var(--text-2)', marginBottom: '24px' }}>Rate your mood and energy right now.</p>
-
-          <SliderInput
-            label="Mood"
-            value={form.mood}
-            onChange={(v) => setForm({ ...form, mood: v })}
-            color="#6366f1"
-          />
-          <SliderInput
-            label="Energy"
-            value={form.energy}
-            onChange={(v) => setForm({ ...form, energy: v })}
-            color="#22c55e"
-          />
-
-          <Button onClick={() => setStep(2)} style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}>
-            Continue →
-          </Button>
+    <div style={{ maxWidth: '520px' }}>
+      {/* Progress */}
+      {step <= totalSteps && (
+        <div style={{ marginBottom: '28px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px', color: 'var(--text-3)' }}>
+            <span>Step {step} of {totalSteps}</span>
+            <span>{Math.round(progress)}%</span>
+          </div>
+          <div style={{ height: '3px', background: 'var(--border-2)', borderRadius: '2px' }}>
+            <div style={{ height: '100%', width: `${progress}%`, background: 'var(--accent)', borderRadius: '2px', transition: 'width 0.3s ease' }} />
+          </div>
         </div>
       )}
 
-      {/* Step 2: Sleep */}
+      {/* Step 1 */}
+      {step === 1 && (
+        <div>
+          <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '6px', letterSpacing: '-0.02em' }}>How are you feeling?</h2>
+          <p style={{ fontSize: '14px', color: 'var(--text-2)', marginBottom: '32px' }}>Rate your mood and energy right now, not how you want to feel.</p>
+          <SliderInput label="Mood" value={form.mood} onChange={v => setForm(f => ({ ...f, mood: v }))} color="var(--accent)" />
+          <SliderInput label="Energy Level" value={form.energy} onChange={v => setForm(f => ({ ...f, energy: v }))} color="var(--success)" />
+          <Button onClick={() => setStep(2)} style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }} size="lg">Continue →</Button>
+        </div>
+      )}
+
+      {/* Step 2 */}
       {step === 2 && (
         <div>
-          <h2 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '6px' }}>How did you sleep?</h2>
-          <p style={{ fontSize: '13px', color: 'var(--text-2)', marginBottom: '24px' }}>Hours of sleep last night.</p>
-
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <div style={{ fontSize: '48px', fontWeight: '600', fontFamily: 'var(--font-geist-mono)', color: 'var(--text)' }}>
-              {form.sleep}h
+          <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '6px', letterSpacing: '-0.02em' }}>How did you sleep?</h2>
+          <p style={{ fontSize: '14px', color: 'var(--text-2)', marginBottom: '32px' }}>Hours of sleep last night. Sleep is the most important variable in bipolar disorder.</p>
+          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+            <div style={{ fontSize: '64px', fontWeight: '700', fontFamily: 'var(--font-geist-mono)', color: 'var(--text)', lineHeight: 1 }}>
+              {form.sleep}
+              <span style={{ fontSize: '28px', color: 'var(--text-3)', fontWeight: '400' }}>h</span>
             </div>
-            {form.sleep < 6 && <div style={{ fontSize: '12px', color: 'var(--warning)', marginTop: '4px' }}>⚠ Low sleep is a key trigger</div>}
-            {form.sleep >= 7 && form.sleep <= 9 && <div style={{ fontSize: '12px', color: 'var(--success)', marginTop: '4px' }}>✓ Good sleep range</div>}
+            <div style={{ fontSize: '13px', marginTop: '8px', height: '20px' }}>
+              {form.sleep < 5 ? <span style={{ color: 'var(--danger)' }}>Low sleep is a major trigger — note this</span>
+               : form.sleep < 6 ? <span style={{ color: 'var(--warning)' }}>Below recommended range</span>
+               : form.sleep >= 7 && form.sleep <= 9 ? <span style={{ color: 'var(--success)' }}>Good sleep range</span>
+               : form.sleep > 10 ? <span style={{ color: 'var(--accent)' }}>Long sleep — common in depressive episodes</span>
+               : <span style={{ color: 'var(--text-3)' }}>&nbsp;</span>}
+            </div>
           </div>
-
-          <input
-            type="range"
-            min={0}
-            max={12}
-            step={0.5}
-            value={form.sleep}
-            onChange={(e) => setForm({ ...form, sleep: Number(e.target.value) })}
-            style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer', marginBottom: '20px' }}
-          />
-
+          <input type="range" min={0} max={14} step={0.5} value={form.sleep}
+            onChange={e => setForm(f => ({ ...f, sleep: Number(e.target.value) }))}
+            style={{ width: '100%', marginBottom: '28px', accentColor: 'var(--accent)' }} />
           <div style={{ display: 'flex', gap: '8px' }}>
             <Button variant="secondary" onClick={() => setStep(1)} style={{ flex: 1, justifyContent: 'center' }}>← Back</Button>
             <Button onClick={() => setStep(3)} style={{ flex: 2, justifyContent: 'center' }}>Continue →</Button>
@@ -127,171 +95,110 @@ export function PulseForm() {
         </div>
       )}
 
-      {/* Step 3: Meds */}
+      {/* Step 3 */}
       {step === 3 && (
         <div>
-          <h2 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '6px' }}>Medication taken today?</h2>
-          <p style={{ fontSize: '13px', color: 'var(--text-2)', marginBottom: '24px' }}>No judgment — just tracking.</p>
-
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
-            <button
-              onClick={() => setForm({ ...form, medsTaken: true })}
-              style={{
-                flex: 1,
-                padding: '20px',
-                borderRadius: 'var(--radius)',
-                border: `2px solid ${form.medsTaken === true ? 'var(--success)' : 'var(--border)'}`,
-                background: form.medsTaken === true ? '#052e16' : 'var(--surface-2)',
-                color: form.medsTaken === true ? 'var(--success)' : 'var(--text-2)',
-                fontSize: '15px',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-                fontFamily: 'inherit',
-              }}
-            >
-              ✓ Yes
-            </button>
-            <button
-              onClick={() => setForm({ ...form, medsTaken: false })}
-              style={{
-                flex: 1,
-                padding: '20px',
-                borderRadius: 'var(--radius)',
-                border: `2px solid ${form.medsTaken === false ? 'var(--danger)' : 'var(--border)'}`,
-                background: form.medsTaken === false ? '#450a0a' : 'var(--surface-2)',
-                color: form.medsTaken === false ? 'var(--danger)' : 'var(--text-2)',
-                fontSize: '15px',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-                fontFamily: 'inherit',
-              }}
-            >
-              ✗ No
-            </button>
+          <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '6px', letterSpacing: '-0.02em' }}>Medication today?</h2>
+          <p style={{ fontSize: '14px', color: 'var(--text-2)', marginBottom: '32px' }}>No judgment. This is just data. Consistency with medication is the single most protective factor in bipolar disorder.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '28px' }}>
+            {[
+              { value: true, label: 'Yes, taken', color: 'var(--success)', dim: 'var(--success-dim)' },
+              { value: false, label: 'Not today', color: 'var(--danger)', dim: 'var(--danger-dim)' },
+            ].map(({ value, label, color, dim }) => (
+              <button key={String(value)} onClick={() => setForm(f => ({ ...f, medsTaken: value }))}
+                style={{
+                  padding: '24px 16px', borderRadius: 'var(--radius)', cursor: 'pointer',
+                  border: `2px solid ${form.medsTaken === value ? color : 'var(--border)'}`,
+                  background: form.medsTaken === value ? dim : 'var(--surface-2)',
+                  color: form.medsTaken === value ? color : 'var(--text-2)',
+                  fontSize: '15px', fontWeight: '600', fontFamily: 'inherit', transition: 'all 0.15s',
+                }}>
+                {label}
+              </button>
+            ))}
           </div>
-
           <div style={{ display: 'flex', gap: '8px' }}>
             <Button variant="secondary" onClick={() => setStep(2)} style={{ flex: 1, justifyContent: 'center' }}>← Back</Button>
-            <Button
-              onClick={() => setStep(4)}
-              disabled={form.medsTaken === null}
-              style={{ flex: 2, justifyContent: 'center' }}
-            >
-              Continue →
-            </Button>
+            <Button onClick={() => setStep(4)} disabled={form.medsTaken === null} style={{ flex: 2, justifyContent: 'center' }}>Continue →</Button>
           </div>
         </div>
       )}
 
-      {/* Step 4: Word + Note */}
+      {/* Step 4 */}
       {step === 4 && (
         <div>
-          <h2 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '6px' }}>One word for today</h2>
-          <p style={{ fontSize: '13px', color: 'var(--text-2)', marginBottom: '16px' }}>Pick one or type your own.</p>
-
+          <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '6px', letterSpacing: '-0.02em' }}>One word for today</h2>
+          <p style={{ fontSize: '14px', color: 'var(--text-2)', marginBottom: '20px' }}>Pick one or type your own. This becomes part of your longitudinal data.</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
-            {WORDS.map((w) => (
-              <button
-                key={w}
-                onClick={() => setForm({ ...form, word: w })}
+            {WORDS.map(w => (
+              <button key={w} onClick={() => setForm(f => ({ ...f, word: w }))}
                 style={{
-                  padding: '6px 12px',
-                  borderRadius: '20px',
+                  padding: '7px 14px', borderRadius: '20px', cursor: 'pointer', fontFamily: 'inherit',
                   border: `1px solid ${form.word === w ? 'var(--accent)' : 'var(--border)'}`,
-                  background: form.word === w ? '#1e1b4b' : 'var(--surface-2)',
+                  background: form.word === w ? 'var(--accent-dim)' : 'var(--surface-2)',
                   color: form.word === w ? 'var(--accent)' : 'var(--text-2)',
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                  fontFamily: 'inherit',
-                }}
-              >
+                  fontSize: '14px', transition: 'all 0.1s',
+                }}>
                 {w}
               </button>
             ))}
           </div>
-
-          <input
-            type="text"
-            placeholder="Or type your own word..."
+          <input type="text" placeholder="Or type your own..."
             value={WORDS.includes(form.word) ? '' : form.word}
-            onChange={(e) => setForm({ ...form, word: e.target.value })}
+            onChange={e => setForm(f => ({ ...f, word: e.target.value }))}
             style={{
-              width: '100%',
-              padding: '10px 14px',
-              background: 'var(--surface-2)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius)',
-              color: 'var(--text)',
-              fontSize: '14px',
-              fontFamily: 'inherit',
-              marginBottom: '12px',
-              outline: 'none',
-            }}
-          />
-
-          <textarea
-            placeholder="Anything to add? (optional)"
-            value={form.note}
-            onChange={(e) => setForm({ ...form, note: e.target.value })}
-            rows={3}
-            style={{
-              width: '100%',
-              padding: '10px 14px',
-              background: 'var(--surface-2)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius)',
-              color: 'var(--text)',
-              fontSize: '14px',
-              fontFamily: 'inherit',
-              marginBottom: '16px',
-              outline: 'none',
-              resize: 'none',
-            }}
-          />
-
+              width: '100%', padding: '11px 14px', background: 'var(--surface-2)',
+              border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
+              color: 'var(--text)', fontSize: '14px', fontFamily: 'inherit', outline: 'none', marginBottom: '12px',
+            }} />
+          <textarea placeholder="Anything to add? (optional — this is private)"
+            value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
+            rows={3} style={{
+              width: '100%', padding: '11px 14px', background: 'var(--surface-2)',
+              border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
+              color: 'var(--text)', fontSize: '14px', fontFamily: 'inherit',
+              outline: 'none', resize: 'none', marginBottom: '16px',
+            }} />
           <div style={{ display: 'flex', gap: '8px' }}>
             <Button variant="secondary" onClick={() => setStep(3)} style={{ flex: 1, justifyContent: 'center' }}>← Back</Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={!form.word || loading}
-              style={{ flex: 2, justifyContent: 'center' }}
-            >
-              {loading ? 'Saving...' : 'Save check-in ✓'}
+            <Button onClick={handleSubmit} disabled={!form.word || loading} style={{ flex: 2, justifyContent: 'center' }} size="lg">
+              {loading ? 'Saving...' : 'Save pulse'}
             </Button>
           </div>
         </div>
       )}
 
-      {/* Step 5: AI Reflection */}
+      {/* Step 5 — AI reflection + redirect */}
       {step === 5 && (
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <div style={{ fontSize: '28px', marginBottom: '16px' }}>✨</div>
-          <div style={{ fontSize: '15px', fontWeight: '500', color: 'var(--text)', marginBottom: '20px' }}>
-            Check-in saved
+          <div style={{
+            width: '56px', height: '56px', borderRadius: '50%', background: 'var(--success-dim)',
+            border: '1px solid var(--success)', margin: '0 auto 20px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <span style={{ color: 'var(--success)', fontSize: '22px', fontWeight: '700' }}>✓</span>
+          </div>
+          <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text)', marginBottom: '6px', letterSpacing: '-0.02em' }}>
+            Pulse recorded
+          </div>
+          <div style={{ fontSize: '14px', color: 'var(--text-2)', marginBottom: '24px' }}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </div>
           {reflection && (
-            <div
-              style={{
-                padding: '16px 20px',
-                background: 'var(--surface-2)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius)',
-                fontSize: '15px',
-                color: 'var(--text-2)',
-                fontStyle: 'italic',
-                lineHeight: '1.6',
-                marginBottom: '24px',
-              }}
-            >
+            <div style={{
+              padding: '18px 22px', background: 'var(--accent-dim)',
+              border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)',
+              borderRadius: 'var(--radius)', fontSize: '16px', color: 'var(--text)',
+              fontStyle: 'italic', lineHeight: '1.6', marginBottom: '28px', textAlign: 'left',
+            }}>
               "{reflection}"
             </div>
           )}
-          <Button onClick={() => { router.push('/'); router.refresh() }} style={{ width: '100%', justifyContent: 'center' }}>
-            Back to Dashboard
+          <Button onClick={() => { router.push('/'); router.refresh() }} style={{ width: '100%', justifyContent: 'center' }} size="lg">
+            Go to dashboard →
           </Button>
         </div>
       )}
-    </Card>
+    </div>
   )
 }
